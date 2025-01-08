@@ -7,6 +7,7 @@ const StockForm = () => {
     ticker: '',
     quantity: "Quantity",
     buyPrice: ''
+    
   });
   const navigate = useNavigate();
 
