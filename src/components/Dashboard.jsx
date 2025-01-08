@@ -40,7 +40,7 @@ const Dashboard = () => {
 
   return (
     <div className=''>
-      <h1 className='text-center text-5xl font-semibold py-6 px-4 bg-green-400 w-max mx-auto rounded-xl '>Portfolio Dashboard</h1>
+      <h1 className='text-center text-5xl font-semibold py-6 px-4 bg-green-400 w-max mx-auto rounded-xl '>Portfolio Dashboard </h1>
 
       <div className='flex justify-evenly items-center mt-24'>
       <p className='bg-gray-100 py-3 px-3 shadow-xl rounded-lg'>Total Portfolio Value: ${totalValue}</p>
