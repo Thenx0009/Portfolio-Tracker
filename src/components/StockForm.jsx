@@ -1,77 +1,216 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const StockForm = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   const [stock, setStock] = useState({
     name: '',
     ticker: '',
-    quantity: "Quantity",
-    buyPrice: ''
-    
+    quantity: 1,
+    buyPrice: 1,
   });
-  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setStock({ ...stock, [e.target.name]: e.target.value });
+  const [error, setError] = useState('');
+
+  const isEditMode = Boolean(id);
+
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchStock = async () => {
+        try {
+          const response = await fetch(`http://localhost:8080/api/stocks/${id}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch stock details');
+          }
+          const data = await response.json();
+          setStock(data);
+        } catch (error) {
+          console.error('Error fetching stock details:', error);
+        }
+      };
+
+      fetchStock();
+    }
+  }, [id, isEditMode]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'quantity' || name === 'buyPrice') {
+      const numericValue = parseFloat(value);
+      if (numericValue < 1 || isNaN(numericValue)) {
+        setError(`${name === 'quantity' ? 'Quantity' : 'Buy Price'} must be greater than zero`);
+        return;
+      }
+      setError('');
+    }
+
+    setStock({ ...stock, [name]: value });
+  };
+
+  const handleIncrement = (field) => {
+    setStock((prevStock) => ({
+      ...prevStock,
+      [field]: Math.max(1, parseFloat(prevStock[field]) + 1),
+    }));
+  };
+
+  const handleDecrement = (field) => {
+    setStock((prevStock) => ({
+      ...prevStock,
+      [field]: Math.max(1, parseFloat(prevStock[field]) - 1),
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (stock.quantity < 1 || stock.buyPrice < 1) {
+      setError('Quantity and Buy Price must be greater than zero');
+      return;
+    }
+
+    const url = isEditMode
+      ? `http://localhost:8080/api/stocks/${id}`
+      : `http://localhost:8080/api/stocks`;
+
+    const method = isEditMode ? 'PUT' : 'POST';
+
     try {
-      const response = await fetch('http://localhost:8080/api/stocks', {
-        method: 'POST',
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(stock),
       });
 
-      if (response.ok) {
-        console.log('Stock added successfully');
-        navigate('/stocks');
-      } else {
-        console.error('Failed to submit the stock:', response.statusText);
+      if (!response.ok) {
+        throw new Error(`Failed to ${isEditMode ? 'update' : 'add'} stock`);
       }
+
+      navigate('/stocks');
     } catch (error) {
-      console.error('There was an error submitting the stock:', error);
+      console.error('Error submitting stock form:', error);
     }
   };
 
   return (
-    <> 
-    <div className='flex justify-center items-center '>
-      <form onSubmit={handleSubmit} className='space-x-4'>
-        <input className='bg-gray-100 py-4 px-3 rounded-lg outline-none'
-          name="name"
-          placeholder="Stock Name"
-          value={stock.name}
-          onChange={handleChange}
-        />
-        <input className='bg-gray-100 py-4 px-3 rounded-lg outline-none'
-          name="ticker"
-          placeholder="Ticker"
-          value={stock.ticker}
-          onChange={handleChange}
-        />
-        <input className='bg-gray-100 py-4 px-3 rounded-lg outline-none'
-          name="quantity"
-          placeholder="Quantity"
-          type="number"
-          value={stock.quantity}
-          onChange={handleChange}
-        />
-        <input className='bg-gray-100 py-4 px-3 rounded-lg outline-none'
-          name="buyPrice"
-          placeholder="Buy Price"
-          type="number"
-          value={stock.buyPrice}
-          onChange={handleChange}
-        />
-        <button className='bg-green-400 py-3 px-10 rounded-xl font-semibold' type="submit">Save</button>
-      </form>
+    <div className="pt-14 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold mb-5 text-center">
+          {isEditMode ? 'Edit Stock' : 'Add New Stock'}
+        </h1>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Stock Name */}
+          <div className="flex flex-col md:flex-row items-center">
+            <label className="md:w-1/3 font-semibold mb-2 md:mb-0 md:mr-4">Stock Name</label>
+            <input
+              type="text"
+              name="name"
+              value={stock.name}
+              onChange={handleInputChange}
+              placeholder="Stock Name"
+              className="p-2 border rounded w-full md:w-2/3"
+              required
+            />
+          </div>
+
+          {/* Ticker */}
+          <div className="flex flex-col md:flex-row items-center">
+            <label className="md:w-1/3 font-semibold mb-2 md:mb-0 md:mr-4">Ticker</label>
+            <input
+              type="text"
+              name="ticker"
+              value={stock.ticker}
+              onChange={handleInputChange}
+              placeholder="Ticker"
+              className="p-2 border rounded w-full md:w-2/3"
+              required
+            />
+          </div>
+
+          {/* Quantity */}
+          <div className="flex flex-col md:flex-row items-center">
+            <label className="md:w-1/3 font-semibold mb-2 md:mb-0 md:mr-4">Quantity</label>
+            <div className="flex items-center w-full md:w-2/3 border rounded p-1">
+              <button
+                type="button"
+                onClick={() => handleDecrement('quantity')}
+                className="px-4 py-2 text-gray-600"
+              >
+                -
+              </button>
+              <input
+                type="number"
+                name="quantity"
+                value={stock.quantity}
+                onChange={handleInputChange}
+                className="w-full text-center border-0 focus:ring-0 no-spinner outline-none"
+                required
+                min="1"
+              />
+              <button
+                type="button"
+                onClick={() => handleIncrement('quantity')}
+                className="px-4 py-2 text-gray-600"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Buy Price */}
+          <div className="flex flex-col md:flex-row items-center">
+            <label className="md:w-1/3 font-semibold mb-2 md:mb-0 md:mr-4">Buy Price</label>
+            <div className="flex items-center w-full md:w-2/3 border rounded p-1">
+              <button
+                type="button"
+                onClick={() => handleDecrement('buyPrice')}
+                className="px-4 py-2 text-gray-600"
+              >
+                -
+              </button>
+              <input
+                type="number"
+                name="buyPrice"
+                value={stock.buyPrice}
+                onChange={handleInputChange}
+                className="w-full text-center border-0 focus:ring-0 no-spinner outline-none"
+                required
+                min="1"
+              />
+              <button
+                type="button"
+                onClick={() => handleIncrement('buyPrice')}
+                className="px-4 py-2 text-gray-600"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <button
+            type="submit"
+            className="bg-green-500 text-white py-2 px-4 rounded w-full md:w-full"
+          >
+            {isEditMode ? 'Save Changes' : 'Add Stock'}
+          </button>
+        </form>
       </div>
-    </>
+    </div>
   );
 };
 
 export default StockForm;
+
+
+
+
+
+
+

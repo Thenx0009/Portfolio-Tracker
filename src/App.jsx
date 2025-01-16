@@ -4,11 +4,13 @@ import Dashboard from './components/Dashboard';
 import StockForm from './components/StockForm';
 import StockTable from './components/StockTable';
 import StockPrice from './components/StockPrice'; 
+import NavBar from './components/NavBar';
 
 const App = () => {
   return (
     <>
       <Router>
+        <NavBar />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/add" element={<StockForm />} />
