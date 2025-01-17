@@ -34,7 +34,7 @@ const item = {
       <div>
         <div className="flex items-center justify-between px-8 md:flex md:justify-around md:items-center shadow-md py-4">
           <Link to="/">
-            <h1 className="text-2xl sm:text-4xl font-semibold">Portfolio Tracker</h1>
+            <h1 className="text-2xl sm:text-4xl font-semibold">Stockfolio</h1>
           </Link>
           <div className=" hidden md:flex md:gap-10 lg:gap-16 items-center">
             <NavLink to="/">
